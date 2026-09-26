@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power BI 三页看板 · 逐步操作手册</title>
+<style>
+  :root{
+    --navy:#12325c; --blue:#1f5fa9; --light:#eef3fa; --line:#c9d6e5;
+    --text:#2b3745; --muted:#66788c; --warn:#b45309; --warnbg:#fff7ed;
+    --tip:#0b6b52; --tipbg:#eefaf5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:#f2f5f9; color:var(--text);
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif; font-size:15px; line-height:1.75;}
+  .wrap{max-width:980px; margin:0 auto; padding:30px 26px 80px;}
+  header{background:linear-gradient(135deg,#12325c,#1f5fa9); color:#fff; border-radius:10px; padding:26px 30px; margin-bottom:24px;}
+  header h1{margin:0 0 6px; font-size:24px;}
+  header .sub{font-size:14px; opacity:.92;}
+  section{background:#fff; border-radius:10px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  h2{color:var(--navy); font-size:20px; margin:0 0 14px; padding-bottom:9px; border-bottom:2px solid var(--light);}
+  h3{font-size:16.5px; color:var(--blue); margin:20px 0 8px;
+     background:var(--light); padding:7px 12px; border-radius:6px; border-left:4px solid var(--blue);}
+  h4{font-size:15px; margin:14px 0 5px; color:var(--text);}
+  ul,ol{padding-left:22px; margin:6px 0;} li{margin:3px 0;}
+  code.inl{background:#eef1f5; padding:1px 6px; border-radius:4px; font-size:13px; color:#0b3f6e; font-family:Consolas,monospace;}
+  pre{background:#1b2430; color:#e6edf3; padding:12px 15px; border-radius:8px; overflow-x:auto;
+      font-size:13px; line-height:1.6; margin:8px 0; font-family:Consolas,monospace;}
+  .note{background:var(--light); border-left:4px solid var(--blue); padding:11px 15px; margin:11px 0; border-radius:0 6px 6px 0; font-size:14.5px;}
+  .warn{background:var(--warnbg); border-left:4px solid var(--warn); padding:11px 15px; margin:11px 0; border-radius:0 6px 6px 0; font-size:14.5px;}
+  .tip{background:var(--tipbg); border-left:4px solid var(--tip); padding:11px 15px; margin:11px 0; border-radius:0 6px 6px 0; font-size:14.5px;}
+  table{border-collapse:collapse; width:100%; margin:10px 0; font-size:14px;}
+  th,td{border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top;}
+  th{background:var(--light); color:var(--navy); font-weight:700;}
+  .stepn{display:inline-block; background:var(--navy); color:#fff; width:24px; height:24px; line-height:24px;
+         text-align:center; border-radius:50%; margin-right:6px; font-size:13px;}
+  .badge{display:inline-block; font-size:11.5px; padding:2px 8px; border-radius:9px; margin-left:6px; vertical-align:middle; color:#fff;}
+  .b-must{background:#b45309;} .b-opt{background:#8899aa;} .b-key{background:#0b6b52;}
+  @media print{ body{background:#fff;} section{box-shadow:none;} pre{background:#f4f6f8;color:#1b2430;border:1px solid #dde3ea;} h3{page-break-after:avoid;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Power BI 三页看板 · 逐步操作手册</h1>
+  <div class="sub">Online Retail 项目 · 每一个视觉对象的精确点击路径｜2026.09</div>
+</header>
+
+<section>
+  <h2>开工前的三条铁律</h2>
+  <ol>
+    <li><strong>新建视觉对象前，先点一下画布空白处（或按 Esc）</strong>，确保没有对象被选中。选中状态下点图表图标 = 把当前对象<strong>转换</strong>成新类型，原来的图就没了。</li>
+    <li>做错了按 <code class="inl">Ctrl+Z</code> 撤销；每做完一个视觉对象按 <code class="inl">Ctrl+S</code> 保存一次。</li>
+    <li>本手册里的字段名以你的导出文件为准：<code class="inl">retail_clean</code>（交易明细）、<code class="inl">rfm</code>（客户分层，一人一行）、<code class="inl">retention</code>（留存矩阵）、<code class="inl">日期表</code>。名字不一样就找对应的那个。</li>
+  </ol>
+  <div class="warn"><strong>必做前置（第一页折线变直线的根因）：</strong>确认 <code class="inl">日期表[Date]</code> 与 <code class="inl">retail_clean[订单日期]</code> 已建立一对多关系（模型视图里是实线）。没有这步，所有按时间的图表都会退化成一条水平线。</div>
+</section>
+
+<section>
+  <h2>度量值全集（一次性建好，三页通用）</h2>
+  <p>菜单栏 <strong>建模 → 新建度量值</strong>，逐条粘贴。建好后它们会出现在字段列表上方带计算器的图标。</p>
+  <pre><code>总销售额 = SUM('retail_clean'[TotalPrice])
+订单数   = DISTINCTCOUNT('retail_clean'[InvoiceNo])
+客户数   = DISTINCTCOUNT('retail_clean'[CustomerID])
+客单价   = DIVIDE([总销售额], [订单数])
+
+-- 第1页：趋势与时间对比
+上月GMV  = CALCULATE([总销售额], PREVIOUSMONTH('日期表'[Date]))
+环比增速 = DIVIDE([总销售额] - [上月GMV], [上月GMV])
+去年GMV  = CALCULATE([总销售额], SAMEPERIODLASTYEAR('日期表'[Date]))
+同比增速 = DIVIDE([总销售额] - [去年GMV], [去年GMV])
+
+-- 第2页：分层相关
+分层GMV  = SUM('rfm'[Monetary])
+人均R    = AVERAGE('rfm'[Recency])
+人均F    = AVERAGE('rfm'[Frequency])
+人均GMV  = AVERAGE('rfm'[Monetary])
+复购率   = DIVIDE(CALCULATE(COUNTROWS('rfm'), 'rfm'[Frequency] &gt;= 2), COUNTROWS('rfm'))
+重要保持客户人数 = CALCULATE(COUNTROWS('rfm'), 'rfm'[Segment] = "重要保持客户")</code></pre>
+  <div class="note"><code class="inl">同比增速</code> 因为数据只有一年，2011 年的月份才有值、2010 年 12 月为空——正常，不用管。第 1 页想用就用一个卡片展示，不用就先留着。</div>
+</section>
+
+<!-- ================= 第1页 ================= -->
+<section>
+  <h2>第 1 页 · 销售总览</h2>
+
+  <h3>1.1 四个 KPI 卡片（总销售额 / 订单数 / 客户数 / 客单价）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点画布空白处 → 可视化面板点<strong>「卡片」</strong>图标（数字 123 那个）。</li>
+    <li><span class="stepn">2</span>右侧字段面板勾选 <code class="inl">总销售额</code>，卡片即显示。</li>
+    <li><span class="stepn">3</span>卡片处于选中状态 → 按 <code class="inl">Ctrl+C</code>、<code class="inl">Ctrl+V</code> 复制三份，拖到右侧并排。</li>
+    <li><span class="stepn">4</span>三个副本分别勾选 <code class="inl">订单数</code>、<code class="inl">客户数</code>、<code class="inl">客单价</code>。</li>
+    <li><span class="stepn">5</span>统一格式：选中卡片 → <strong>格式（刷子图标）→ 视觉效果 → 标签 → 标题</strong>，关闭标题或改成"总销售额"等；<strong>常规 → 效果 → 背景</strong> 可加浅色底。</li>
+  </ol>
+  <div class="tip">小技巧：想让数字显示为"6.59 百万"，选中卡片 → 格式 → 标签 → <strong>显示单位 → 百万</strong>。</div>
+
+  <h3>1.2 月度 GMV 折线图<span class="badge b-key">关键</span></h3>
+  <ol>
+    <li><span class="stepn">1</span>点画布空白处 → 点<strong>「折线图」</strong>。</li>
+    <li><span class="stepn">2</span><strong>X 轴</strong>：从 <code class="inl">日期表</code> 拖 <code class="inl">Date</code>（拖字段本身，<strong>不要拖"Date 层次结构"</strong>）。</li>
+    <li><span class="stepn">3</span>点 X 轴字段旁的下拉箭头 → 选择 <strong>Date（月）</strong>，即显示粒度设为"月"。</li>
+    <li><span class="stepn">4</span><strong>Y 轴</strong>：拖度量值 <code class="inl">总销售额</code>。</li>
+    <li><span class="stepn">5</span>格式 → 常规 → 标题改成"月度销售额趋势（英镑）"；<strong>线条</strong> 里可开启标记点（小圆点）更易读。</li>
+  </ol>
+  <div class="warn">正确结果：<strong>13 个点</strong>，从 2010年12月 到 2011年12月，9~11 月明显爬升，最后一点骤降（该月只有 9 天）。<br>如果 X 轴只有 January~December 12 个点、且没有年份 → 说明你拖了层次结构里的"月份"层，跨年同月会被合并，改回本步第 3 点的做法。</div>
+
+  <h3>1.3 国家销售额 TOP10（横向条形图）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「簇状条形图」</strong>（横向柱子）。</li>
+    <li><span class="stepn">2</span><strong>Y 轴</strong>：<code class="inl">retail_clean[Country]</code>；<strong>X 轴</strong>：<code class="inl">总销售额</code>。</li>
+    <li><span class="stepn">3</span>右侧<strong>筛选器</strong>面板 → 把 <code class="inl">Country</code> 拖进"此视觉对象上的筛选器" → 筛选类型选<strong>前 N 个</strong> → 输入 <strong>10</strong> → 把 <code class="inl">总销售额</code> 拖进"依据值"。<br>（没有"前 N 个"选项就选"高级筛选"，条件设为：显示项目 前 10 项 按 总销售额 降序。）</li>
+    <li><span class="stepn">4</span>标题改为"销售额 TOP10 国家"。</li>
+  </ol>
+  <div class="note">如果想做地图：点<strong>「填充地图」</strong>，位置放 <code class="inl">Country</code>、颜色饱和度放 <code class="inl">总销售额</code>。缺点是 Power BI 可能把某些国家名识别错，条形图更稳，两者选一个即可。</div>
+
+  <h3>1.4 星期 × 小时 销售热力图</h3>
+  <ol>
+    <li><span class="stepn">1</span>先让星期显示中文：数据视图 → 选中 <code class="inl">retail_clean</code> → <strong>建模 → 新建列</strong>：</li>
+  </ol>
+  <pre><code>星期 = SWITCH('retail_clean'[Weekday],
+        0,"周一",1,"周二",2,"周三",3,"周四",4,"周五",5,"周六",6,"周日")</code></pre>
+  <ol start="2">
+    <li><span class="stepn">2</span>（可选）新建排序列，避免"周一/周三/周二"乱序：<code class="inl">星期序号 = 'retail_clean'[Weekday]</code>，然后选中 <code class="inl">星期</code> 列 → <strong>列工具 → 按列排序 → 星期序号</strong>。</li>
+    <li><span class="stepn">3</span>点空白 → 点<strong>「矩阵」</strong>图标。</li>
+    <li><span class="stepn">4</span>字段配置：<strong>行</strong> = <code class="inl">星期</code>，<strong>列</strong> = <code class="inl">Hour</code>，<strong>值</strong> = <code class="inl">总销售额</code>。</li>
+    <li><span class="stepn">5</span>上色：格式 → <strong>单元格元素</strong> → 展开"背景色" → 点 <strong>fx（条件格式）</strong> → 格式样式选<strong>数据色阶</strong> → 最小色设浅黄、最大色设深红 → 确定。</li>
+    <li><span class="stepn">6</span>标题改为"星期 × 小时 销售热力图"。</li>
+  </ol>
+  <div class="tip">预期看到<strong>周六、周日整行是空的</strong>（这家公司周末不处理订单）。这是你 EDA 里最有价值的发现，截图时保证它在画面里。</div>
+
+  <h3>1.5 销量 TOP10 商品</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「簇状条形图」</strong>。</li>
+    <li><span class="stepn">2</span>Y 轴 = <code class="inl">Description</code>，X 轴 = <code class="inl">Quantity</code> 的<strong>求和</strong>（直接拖 <code class="inl">Quantity</code> 字段，默认就是求和）。</li>
+    <li><span class="stepn">3</span>同 1.3 第 3 点，设"前 10 个 按 Quantity 求和"。</li>
+    <li><span class="stepn">4</span>标题"销量 TOP10 商品"。</li>
+  </ol>
+
+  <h3>1.6 切片器（国家 / 月份）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「切片器」</strong>（漏斗图标）。</li>
+    <li><span class="stepn">2</span>字段拖 <code class="inl">Country</code> → 右上角点下拉箭头把样式改为<strong>下拉</strong>（省地方），开启"全选"。</li>
+    <li><span class="stepn">3</span>再建一个切片器，字段拖 <code class="inl">日期表[Date]</code> → 样式改为<strong>介于</strong>（时间滑块）。如果只想按月份选，拖 <code class="inl">OrderMonth</code> 并设为"下拉"。</li>
+  </ol>
+  <div class="warn"><strong>切片器默认不联动其他视觉对象。</strong>选中切片器 → 菜单栏<strong>格式 → 编辑交互</strong>，页面上的每个图右上角会出现小图标，点<strong>筛选</strong>图标（漏斗的那个）让它们被联动。这是"交互式看板"必须的。</div>
+</section>
+
+<!-- ================= 第2页 ================= -->
+<section>
+  <h2>第 2 页 · 用户分层<span class="badge b-key">最重要</span></h2>
+  <p>底部页面标签旁点 <strong>➕</strong> 新建第 2 页，右键标签可重命名为"用户分层"。</p>
+
+  <h3>2.1 客户价值散点图</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「散点图」</strong>。</li>
+    <li><span class="stepn">2</span>从 <code class="inl">rfm</code> 表拖字段：<strong>图例</strong> = <code class="inl">Segment</code>；<strong>X 轴</strong> = <code class="inl">Recency</code>；<strong>Y 轴</strong> = <code class="inl">Frequency</code>；<strong>大小</strong> = <code class="inl">Monetary</code>。</li>
+    <li><span class="stepn">3</span><strong>关键</strong>：点 X 轴字段旁下拉 → 聚合改为<strong>平均值</strong>；Y 轴同样改为平均值；大小可保持<strong>求和</strong>。</li>
+    <li><span class="stepn">4</span>标题"客户价值分布（气泡大小 = 消费金额）"。</li>
+  </ol>
+  <div class="warn">不改聚合的话，Recency 会被<strong>求和</strong>，X 轴出现几万天的怪值，图会挤成一条线。这是这一步唯一的坑。</div>
+
+  <h3>2.2 分层人数 vs GMV 组合图（帕累托）<span class="badge b-key">面试主图</span></h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「折线和簇状柱形图」</strong>。</li>
+    <li><span class="stepn">2</span><strong>X 轴</strong> = <code class="inl">rfm[Segment]</code>。</li>
+    <li><span class="stepn">3</span><strong>列 y 轴</strong> = <code class="inl">rfm[CustomerID]</code>，确认聚合是<strong>计数(非重复)</strong>；若显示为"求和"，点下拉改成计数。</li>
+    <li><span class="stepn">4</span><strong>行 y 轴</strong> = 度量值 <code class="inl">分层GMV</code>。</li>
+    <li><span class="stepn">5</span>图表右上角 <strong>… → 排序方式 → 分层GMV</strong>，并设为降序。</li>
+    <li><span class="stepn">6</span>格式 → 线条 → <strong>线条形状</strong> 开启标记；标题"各分层人数与 GMV 贡献"。</li>
+  </ol>
+  <div class="tip">这张图出来后应该看到：柱子从左到右递减、折线在前两类陡升后迅速走平——这就是帕累托，和你 Python 里 22.8%/69.5% 的数字互相印证。</div>
+
+  <h3>2.3 分层明细表</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「表」</strong>图标。</li>
+    <li><span class="stepn">2</span>依次拖入：<code class="inl">Segment</code>、<code class="inl">CustomerID</code>（计数）、<code class="inl">人均R</code>、<code class="inl">人均F</code>、<code class="inl">人均GMV</code>、<code class="inl">分层GMV</code>。</li>
+    <li><span class="stepn">3</span>右键列头重命名：CustomerID 的计数改成"人数"。</li>
+    <li><span class="stepn">4</span>按分层GMV 降序排（点列头箭头）。</li>
+  </ol>
+  <div class="note">这张表的数字必须和你 Python 跑出的 <code class="inl">summary</code> 对得上（重要价值客户 975 人、人均 GMV 约 4700）。对不上说明数据导入有问题，回头检查。</div>
+
+  <h3>2.4 两个关键卡片</h3>
+  <ol>
+    <li><span class="stepn">1</span>卡片一：勾选度量值 <code class="inl">复购率</code> → 格式 → 标签 → 改为百分比显示（选中字段后列工具里设格式）。</li>
+    <li><span class="stepn">2</span>卡片二：勾选 <code class="inl">重要保持客户人数</code>（你的数据里是 11 人，如实显示即可）。</li>
+  </ol>
+
+  <h3>2.5 Segment 切片器（交互演示用）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「切片器」</strong> → 字段拖 <code class="inl">rfm[Segment]</code>。</li>
+    <li><span class="stepn">2</span>格式 → 视觉效果 → 切片器设置 → 样式选<strong>磁贴</strong>或<strong>下拉</strong>，方向改为水平。</li>
+    <li><span class="stepn">3</span>同样用<strong>格式 → 编辑交互</strong>打开对散点图、明细表的联动。</li>
+  </ol>
+  <div class="tip"><strong>面试现场就演示这个：</strong>点一下"重要价值客户"，散点图和表格瞬间只剩这一类人。这一下比任何静态截图都说明"我会用 BI 做交互式看板"。</div>
+</section>
+
+<!-- ================= 第3页 ================= -->
+<section>
+  <h2>第 3 页 · 留存与商品</h2>
+
+  <h3>3.1 Cohort 留存热力矩阵<span class="badge b-key">简历支撑图</span></h3>
+  <ol>
+    <li><span class="stepn">1</span>新建第 3 页 → 点空白 → 点<strong>「矩阵」</strong>。</li>
+    <li><span class="stepn">2</span><strong>行</strong> = <code class="inl">retention[CohortMonth]</code>；<strong>列</strong> = <code class="inl">retention[CohortIndex]</code>；<strong>值</strong> = <code class="inl">retention[Retention]</code>（聚合选<strong>平均值</strong>）。</li>
+    <li><span class="stepn">3</span>选中值字段 → <strong>列工具 → 格式</strong> 改为<strong>百分比</strong>、小数位 1 位。</li>
+    <li><span class="stepn">4</span>上色：格式 → 单元格元素 → 背景色 fx → <strong>数据色阶</strong> → 最小色浅蓝、最大色深蓝 → 确定。</li>
+    <li><span class="stepn">5</span>标题"同期群留存矩阵（行 = 首购月，列 = 第 N 个月）"。</li>
+  </ol>
+  <div class="note"><strong>右下角空白三角是正常的</strong>（数据右截断）。第 0 列必须全是 100%。次月留存那一列平均约 20.3%，和简历数字一致。</div>
+
+  <h3>3.2 商品销售额 TOP20（带累计占比）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「折线和簇状柱形图」</strong>。</li>
+    <li><span class="stepn">2</span>X 轴 = <code class="inl">Description</code>；列 y 轴 = <code class="inl">总销售额</code>。</li>
+    <li><span class="stepn">3</span>筛选器设"前 20 个 按 总销售额"。</li>
+    <li><span class="stepn">4</span>（进阶，可做可不做）新建度量值并拖到行 y 轴：</li>
+  </ol>
+  <pre><code>累计GMV =
+VAR cur = [总销售额]
+RETURN CALCULATE([总销售额],
+    FILTER(ALLSELECTED('retail_clean'[Description]), [总销售额] &gt;= cur))</code></pre>
+  <div class="warn">累计 GMV 的 DAX 计算量较大，数据量小（4 千客户）可以接受，但如果你电脑上卡顿，直接删掉这根线，只保留柱状图即可——不影响简历。</div>
+
+  <h3>3.3 商品价格带分布（可选）</h3>
+  <ol>
+    <li><span class="stepn">1</span>点空白 → 点<strong>「簇状柱形图」</strong>。</li>
+    <li><span class="stepn">2</span>X 轴 = <code class="inl">UnitPrice</code> → 点 X 轴字段下拉选<strong>新建组 → 箱</strong>(Bin)，箱大小填 <strong>2</strong>（即 0~2、2~4 英镑一档）。</li>
+    <li><span class="stepn">3</span>Y 轴 = <code class="inl">订单数</code> 或 <code class="inl">Quantity</code> 求和。</li>
+    <li><span class="stepn">4</span>标题"商品价格带分布（英镑）"。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>收尾：统一风格 + 导出截图</h2>
+  <h4>统一外观（三页都设一遍）</h4>
+  <ul>
+    <li><strong>视图 → 主题</strong>（新版在"视图 → 主题"或"自定义当前主题"）可一次性统一配色；不用主题就手动把主要颜色改成 <code class="inl">#1f5fa9</code>（深蓝），与你的简历配色一致。</li>
+    <li><strong>视图 → 网格线</strong> 打开，"对齐到网格"让图表边缘整齐。</li>
+    <li>每个视觉对象都改标题，写清单位（英镑、件、人）。</li>
+  </ul>
+  <h4>导出</h4>
+  <ul>
+    <li><strong>文件 → 另存为 PDF</strong>：一次导出全部三页，最省事，直接能放进作品集。</li>
+    <li>或者用 Windows 截图工具（<code class="inl">Win+Shift+S</code>）逐页截，再用 PPT 把三张拼成一页。</li>
+    <li>.pbix 源文件存放在 <code class="inl">powerbi/retail_dashboard.pbix</code>，方便以后改。</li>
+  </ul>
+  <div class="tip"><strong>截图后发我</strong>，我帮你判断哪张最适合放进简历作品位。放简历的图要有三个特点：有业务洞察（比如周末空白、帕累托折线）、数字和简历文案对得上、配色和简历一致。</div>
+</section>
+
+<section>
+  <h2>故障速查表</h2>
+  <table>
+    <tr><th style="width:34%">现象</th><th>原因与解法</th></tr>
+    <tr><td>折线是一条水平直线</td><td>日期表没建关系，或 <code class="inl">InvoiceDate</code> 带时间匹配失败。给 retail_clean 新建列 <code class="inl">订单日期 = INT([InvoiceDate])</code> 改成日期类型后再建关系</td></tr>
+    <tr><td>点图表图标后原来的图没了</td><td>对象处于选中状态，点图标 = 转换类型。按 Ctrl+Z，下次先点空白处</td></tr>
+    <tr><td>X 轴顺序乱（2011-01 后接 2011-10）</td><td>用了文本型 <code class="inl">OrderMonth</code>。改用日期表 <code class="inl">Date</code> 并把粒度设为"月"</td></tr>
+    <tr><td>散点图所有点挤在一条线上</td><td>聚合是"求和"，改成"平均值"</td></tr>
+    <tr><td>切片器点了没反应</td><td>格式 → 编辑交互 → 给目标图点"筛选"图标</td></tr>
+    <tr><td>卡片数字显示为 6590000</td><td>格式 → 标签 → 显示单位 → 选"百万"</td></tr>
+    <tr><td>矩阵里空白一片</td><td>值字段聚合不对（应为平均值），或 retention 表的 CohortMonth 被识别成数字——改成文本即可</td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>

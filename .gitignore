@@ -1,0 +1,35 @@
+# ---- 原始数据与中间产物（体积大 / 可再生）----
+Online Retail.xlsx
+online+retail.zip
+*.zip
+retail_clean.csv
+rfm.csv
+retention.csv
+retention_long.csv
+cluster_profile.csv
+retail.db
+
+# ---- Power BI ----
+*.pbix
+*.pbix.*
+powerbi/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# ---- Jupyter ----
+.ipython/
+
+# ---- 系统 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 编辑器 ----
+.vscode/
+.idea/

@@ -1,0 +1,12 @@
+# 核心依赖（版本为开发时实际使用版本，兼容更高版本）
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+seaborn>=0.12
+scikit-learn>=1.3
+scipy>=1.10
+openpyxl>=3.1          # 读取 .xlsx
+jupyter>=1.0           # 运行 notebook
+
+# 可选：购物篮分析（第 8 节）
+# mlxtend>=0.23
