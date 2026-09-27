@@ -247,15 +247,17 @@ retail-rfm-analysis/
 │   └── PowerBI看板-逐步操作手册.html  # 三页看板的逐步操作说明
 ├── data/
 │   └── README.md                      # 数据获取方式（原始数据不入库）
-└── output/
-    ├── 01_gmv_trend.png
-    ├── 02_heatmap_weekday_hour.png
-    ├── 03_top_items.png
-    ├── 04_top_countries.png
-    ├── 05_gmv_by_hour.png
-    ├── 06_uk_share.png
-    ├── 07_kmeans_k.png
-    └── 08_crosstab.png
+├── output/
+│   ├── 01_gmv_trend.png
+│   ├── 02_heatmap_weekday_hour.png
+│   ├── 03_top_items.png
+│   ├── 04_top_countries.png
+│   ├── 05_gmv_by_hour.png
+│   ├── 06_uk_share.png
+│   ├── 07_kmeans_k.png
+│   └── 08_crosstab.png
+└── powerbi/
+    └── 零售分析看板.pbix             # 三页交互式看板源文件
 ```
 
 > `retail_clean.csv`（41 MB）、`rfm.csv`、`retention.csv` 等中间产物由脚本生成，已在 `.gitignore` 中排除。
@@ -271,6 +273,8 @@ retail-rfm-analysis/
 | 第 1 页 · 销售概览 | 4 个 KPI 卡片、月度 GMV 趋势、国家 TOP10、星期×小时热力、商品 TOP10、国家切片器 | 折线图 + 矩阵热力 |
 | 第 2 页 · 用户分层 | RFM 散点图、人数 vs GMV 帕累托组合图、分层明细表、复购率卡片、Segment 切片器 | 散点 + 折线柱形组合 |
 | 第 3 页 · 留存商品 | Cohort 留存热力矩阵、商品 TOP20 帕累托、价格带分布 | 矩阵条件格式色阶 |
+
+看板源文件：[`powerbi/零售分析看板.pbix`](powerbi/零售分析看板.pbix)（3.7 MB，用免费的 [Power BI Desktop](https://www.microsoft.com/power-bi/desktop) 打开即可查看全部三页与交互筛选）。
 
 逐步操作说明见 [`docs/PowerBI看板-逐步操作手册.html`](docs/PowerBI看板-逐步操作手册.html)。
 
