@@ -15,12 +15,33 @@
 - [项目背景](#项目背景)
 - [数据集](#数据集)
 - [快速开始](#快速开始)
+- [看板预览](#看板预览)
 - [分析流程](#分析流程)
 - [核心结论](#核心结论)
 - [方法亮点](#方法亮点)
 - [项目结构](#项目结构)
 - [Power BI 看板](#power-bi-看板)
 - [免责声明](#免责声明)
+
+---
+
+## 看板预览
+
+> **无需安装 Power BI** —— 三页看板直接在网页上看：
+> - **在线交互版**（可点击切换三页）：<https://zx2022T.github.io/retail-rfm-analysis/>
+> - 本地版：下载 [`docs/看板网页版.html`](docs/看板网页版.html) 双击打开（0.5 MB 单文件，数据已内嵌）
+
+**第 1 页 · 销售总览**
+
+![销售总览](docs/screenshots/page1-sales-overview.png)
+
+**第 2 页 · 用户分层**
+
+![用户分层](docs/screenshots/page2-customer-segments.png)
+
+**第 3 页 · 留存与商品**
+
+![留存与商品](docs/screenshots/page3-retention-products.png)
 
 ---
 
@@ -275,6 +296,8 @@ retail-rfm-analysis/
 | 第 3 页 · 留存商品 | Cohort 留存热力矩阵、商品 TOP20 帕累托、价格带分布 | 矩阵条件格式色阶 |
 
 看板源文件：[`powerbi/零售分析看板.pbix`](powerbi/零售分析看板.pbix)（3.7 MB，用免费的 [Power BI Desktop](https://www.microsoft.com/power-bi/desktop) 打开即可查看全部三页与交互筛选）。
+
+**不想装 Power BI？** 直接看上方[看板预览](#看板预览)，或打开在线交互版：<https://zx2022T.github.io/retail-rfm-analysis/>
 
 逐步操作说明见 [`docs/PowerBI看板-逐步操作手册.html`](docs/PowerBI看板-逐步操作手册.html)。
 
